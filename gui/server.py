@@ -8,10 +8,6 @@ Run: python server.py
 Then open: http://localhost:5000
 """
 
-# eventlet monkey-patch MUST come before all other imports
-import eventlet
-eventlet.monkey_patch()
-
 import socket
 import json
 import time
@@ -150,7 +146,7 @@ def udp_listener(state: WorkoutState, sio: SocketIO) -> None:
             pkt = json.loads(data.decode())
             process_packet(state, pkt)
         except socket.timeout:
-            eventlet.sleep(0)   # yield to other greenlets
+            pass
         except (json.JSONDecodeError, KeyError, ValueError):
             pass
         except Exception as e:
@@ -159,7 +155,7 @@ def udp_listener(state: WorkoutState, sio: SocketIO) -> None:
 
 def emit_loop(state: WorkoutState, sio: SocketIO) -> None:
     while True:
-        eventlet.sleep(1.0 / EMIT_HZ)
+        time.sleep(1.0 / EMIT_HZ)
 
         with state.lock:
             elapsed  = state.elapsed_s()
@@ -188,7 +184,7 @@ def emit_loop(state: WorkoutState, sio: SocketIO) -> None:
 # ── Flask app ──────────────────────────────────────────────────────────────────
 app   = Flask(__name__)
 app.config["SECRET_KEY"] = "swimon-2025"
-sio   = SocketIO(app, async_mode="eventlet", cors_allowed_origins="*")
+sio   = SocketIO(app, async_mode="threading", cors_allowed_origins="*")
 state = WorkoutState()
 
 
