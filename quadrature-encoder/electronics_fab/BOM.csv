@@ -1,0 +1,10 @@
+Designator,Qty,Value,Description,Footprint,Manufacturer,MPN,Digikey Part No (Cut Tape),Unit Price (1),Unit Price (10),Extended Price (1ea),Digikey URL
+D1 D2,2,IR LED,IR Emitter 950nm 10deg TO-18,swimon:CR_S7100_VIS,Vishay Semiconductor,TSTS7100,TSTS7100-ND,$4.64,$3.44,$9.28,https://www.digikey.com/en/products/detail/vishay-semiconductor-opto-division/TSTS7100/4073579
+Q1 Q2,2,Q_Photo_NPN,Phototransistor 950nm 2-SMD Z-Bend,swimon:LED_TEMD1000,Vishay Semiconductor,TEMT1000,751-1052-1-ND,$0.90,$0.63,$1.80,https://www.digikey.com/en/products/detail/vishay-semiconductor-opto-division/TEMT1000/1681186
+U1 U2,2,LM311,Voltage Comparator General Purpose 8-SOIC,swimon:D8,Texas Instruments,LM311DR,296-1388-1-ND,$0.26,$0.18,$0.52,https://www.digikey.com/en/products/detail/texas-instruments/LM311DR/381217
+U3,1,ESP32-C6-DevKitM-1,ESP32-C6 Wi-Fi/BT Dev Board (4MB flash),PCM_Espressif:ESP32-C6-DevKitM-1,Espressif Systems,ESP32-C6-DEVKITM-1-N4,1965-ESP32-C6-DEVKITM-1-N4-ND,$8.00,—,$8.00,https://www.digikey.com/en/products/detail/espressif-systems/ESP32-C6-DEVKITM-1-N4/18667011
+R1 R5,2,220R,Res 220 Ohm 5% 1/20W SMD 0201,Resistor_SMD:R_0201_0603Metric,Yageo,RC0201JR-07220RL,311-220NCT-ND,$0.10,$0.03,$0.20,https://www.digikey.com/en/products/detail/yageo/RC0201JR-07220RL/1948929
+R2 R6,2,1M,Res 1M Ohm 1% 1/20W SMD 0201,Resistor_SMD:R_0201_0603Metric,Yageo,RC0201FR-071ML,311-1MMCT-ND,$0.10,$0.03,$0.20,https://www.digikey.com/en/products/detail/yageo/RC0201FR-071ML/3202390
+R3 R4,2,20k,Res 20K Ohm 1% 1/20W SMD 0201,Resistor_SMD:R_0201_0603Metric,Yageo,RC0201FR-0720KL,YAG2276CT-ND,$0.10,$0.03,$0.20,https://www.digikey.com/en/products/detail/yageo/RC0201FR-0720KL/3202392
+"J2, J1",2,Screw_Terminal_01x02,2-Pos Wire-to-Board Terminal Block 3.5mm PTH,SparkFun-Connector:ScrewTerminal_1x02_P3.5mm_Blue,On Shore Technology,OSTTE020161,ED2635-ND,$0.67,$0.50,$0.67,https://www.digikey.com/en/products/detail/on-shore-technology-inc/OSTTE020161/614584
+,,,,,,,,,,Total (qty 1 each):,$20.87

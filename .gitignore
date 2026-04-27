@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+venv/
+.venv/
+
+# KiCad autosave / backups
+*.kicad_pcb-bak
+*.kicad_sch-bak
+*.bak
+*-backups/
+_autosave-*
+fp-info-cache
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VSCode (keep .claude/ which has project settings)
+.vscode/
+.claude/
+build/
+*.zip
+target/
+target/*
+/target/

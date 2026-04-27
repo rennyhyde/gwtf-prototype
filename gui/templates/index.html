@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SwimOn</title>
+
+  <!-- Socket.IO 4.x client — matches flask-socketio 5.x (protocol v5) -->
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <!-- Chart.js UMD bundle (no build step needed) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* ── Design tokens ──────────────────────────────────────────────────── */
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --border:    #30363d;
+      --accent:    #00b4d8;
+      --accent2:   #48cae4;
+      --accent3:   #90e0ef;
+      --text:      #e6edf3;
+      --dim:       #8b949e;
+      --green:     #3fb950;
+      --red:       #f85149;
+      --mono:      'Courier New', 'Consolas', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      padding: 0.75rem;
+    }
+
+    /* ── Header ─────────────────────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.65rem 1rem;
+    }
+
+    .logo {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--dim);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    #status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--dim);
+      transition: background 0.4s;
+      flex-shrink: 0;
+    }
+    #status-dot.active { background: var(--green); }
+
+    /* ── Metrics grid ────────────────────────────────────────────────────── */
+    #metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.6rem;
+    }
+
+    @media (max-width: 700px) {
+      #metrics-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.85rem 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.2rem;
+    }
+
+    .card-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--dim);
+    }
+
+    .card-value {
+      font-family: var(--mono);
+      font-size: 1.9rem;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .card-unit {
+      font-size: 0.7rem;
+      color: var(--dim);
+    }
+
+    /* ── Controls ────────────────────────────────────────────────────────── */
+    #controls {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+
+    button {
+      padding: 0.55rem 1.8rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    button:active { transform: scale(0.97); }
+    button:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+    #btn-begin { background: var(--green); color: #000; }
+    #btn-end   { background: var(--red);   color: #fff; }
+
+    /* ── Charts ──────────────────────────────────────────────────────────── */
+    #charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+    }
+
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.65rem 0.75rem 0.5rem;
+    }
+
+    .chart-card.wide {
+      grid-column: 1 / -1;
+    }
+
+    .chart-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--dim);
+      margin-bottom: 0.4rem;
+    }
+
+    .chart-card canvas { max-height: 130px; }
+    .chart-card.wide canvas { max-height: 110px; }
+
+    @media (max-width: 600px) {
+      #charts-grid { grid-template-columns: 1fr; }
+      .chart-card.wide { grid-column: 1; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <header>
+    <span class="logo">SWIMON</span>
+    <div class="status">
+      <span id="status-dot"></span>
+      <span id="status-text">Waiting</span>
+    </div>
+  </header>
+
+  <!-- ── Metrics grid ───────────────────────────────────────────────────── -->
+  <div id="metrics-grid">
+    <div class="card">
+      <span class="card-label">Time</span>
+      <span class="card-value" id="m-time">00:00</span>
+      <span class="card-unit">mm:ss</span>
+    </div>
+    <div class="card">
+      <span class="card-label">Distance</span>
+      <span class="card-value" id="m-dist">0</span>
+      <span class="card-unit">meters</span>
+    </div>
+    <div class="card">
+      <span class="card-label">Calories</span>
+      <span class="card-value" id="m-cal">0.0</span>
+      <span class="card-unit">kcal</span>
+    </div>
+    <div class="card">
+      <span class="card-label">Strokes</span>
+      <span class="card-value" id="m-strokes">0</span>
+      <span class="card-unit">total</span>
+    </div>
+    <div class="card">
+      <span class="card-label">Speed</span>
+      <span class="card-value" id="m-speed">0.00</span>
+      <span class="card-unit">m/s</span>
+    </div>
+    <div class="card">
+      <span class="card-label">Power</span>
+      <span class="card-value" id="m-power">0</span>
+      <span class="card-unit">W</span>
+    </div>
+    <div class="card">
+      <span class="card-label">Force L</span>
+      <span class="card-value" id="m-fl">0</span>
+      <span class="card-unit">N</span>
+    </div>
+    <div class="card">
+      <span class="card-label">Force R</span>
+      <span class="card-value" id="m-fr">0</span>
+      <span class="card-unit">N</span>
+    </div>
+  </div>
+
+  <!-- ── Controls ───────────────────────────────────────────────────────── -->
+  <div id="controls">
+    <button id="btn-begin">BEGIN WORKOUT</button>
+    <button id="btn-end"   disabled>END WORKOUT</button>
+  </div>
+
+  <!-- ── Charts ─────────────────────────────────────────────────────────── -->
+  <div id="charts-grid">
+    <div class="chart-card">
+      <div class="chart-label">Left Arm Force (N)</div>
+      <canvas id="chart-left"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-label">Right Arm Force (N)</div>
+      <canvas id="chart-right"></canvas>
+    </div>
+    <div class="chart-card wide">
+      <div class="chart-label">Combined Power (W)</div>
+      <canvas id="chart-power"></canvas>
+    </div>
+  </div>
+
+  <script>
+    // ── Socket.IO ────────────────────────────────────────────────────────────
+    const socket = io();
+
+    // ── DOM refs ─────────────────────────────────────────────────────────────
+    const el = {
+      time:    document.getElementById('m-time'),
+      dist:    document.getElementById('m-dist'),
+      cal:     document.getElementById('m-cal'),
+      strokes: document.getElementById('m-strokes'),
+      speed:   document.getElementById('m-speed'),
+      power:   document.getElementById('m-power'),
+      fl:      document.getElementById('m-fl'),
+      fr:      document.getElementById('m-fr'),
+      dot:     document.getElementById('status-dot'),
+      status:  document.getElementById('status-text'),
+      begin:   document.getElementById('btn-begin'),
+      end:     document.getElementById('btn-end'),
+    };
+
+    // ── Chart factory ─────────────────────────────────────────────────────────
+    function makeChart(canvasId, label, color, yMax) {
+      return new Chart(document.getElementById(canvasId), {
+        type: 'line',
+        data: {
+          datasets: [{
+            label,
+            data: [],            // [{x, y}] pairs
+            borderColor: color,
+            borderWidth: 1.5,
+            pointRadius: 0,
+            tension: 0.35,
+            fill: true,
+            backgroundColor: color + '1a',  // ~10% opacity fill
+          }]
+        },
+        options: {
+          animation: false,      // critical at 10 Hz on Raspberry Pi
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              type: 'linear',
+              min: 0,
+              max: 10,
+              ticks: {
+                color: '#8b949e',
+                maxTicksLimit: 6,
+                callback: v => v.toFixed(0) + 's',
+              },
+              grid: { color: '#30363d' },
+            },
+            y: {
+              min: 0,
+              max: yMax,
+              ticks: { color: '#8b949e', maxTicksLimit: 5 },
+              grid: { color: '#30363d' },
+            },
+          },
+          plugins: { legend: { display: false } },
+        },
+      });
+    }
+
+    const chartLeft  = makeChart('chart-left',  'Left Force (N)',  '#00b4d8', 60);
+    const chartRight = makeChart('chart-right', 'Right Force (N)', '#48cae4', 60);
+    const chartPower = makeChart('chart-power', 'Power (W)',       '#90e0ef', 150);
+
+    // ── Chart updater ─────────────────────────────────────────────────────────
+    function updateChart(chart, pts, nowT) {
+      chart.data.datasets[0].data = pts.map(p => ({ x: p.t, y: p.v }));
+      chart.options.scales.x.min = Math.max(0, nowT - 10);
+      chart.options.scales.x.max = Math.max(10, nowT);
+      chart.update('none');    // skip animation even if somehow re-enabled
+    }
+
+    // ── Metrics handler ───────────────────────────────────────────────────────
+    socket.on('metrics', function(d) {
+      el.time.textContent    = d.time_str;
+      el.dist.textContent    = d.distance_m.toFixed(0);
+      el.cal.textContent     = d.calories.toFixed(1);
+      el.strokes.textContent = d.strokes;
+      el.speed.textContent   = d.speed_ms.toFixed(2);
+      el.power.textContent   = d.power_w.toFixed(0);
+      el.fl.textContent      = d.force_left.toFixed(0);
+      el.fr.textContent      = d.force_right.toFixed(0);
+
+      // Status indicator
+      const running = d.running;
+      el.dot.classList.toggle('active', running);
+      el.status.textContent = running ? 'Live' : 'Stopped';
+      el.begin.disabled = running;
+      el.end.disabled   = !running;
+
+      // Charts
+      updateChart(chartLeft,  d.chart_left,  d.elapsed_s);
+      updateChart(chartRight, d.chart_right, d.elapsed_s);
+      updateChart(chartPower, d.chart_power, d.elapsed_s);
+    });
+
+    // ── Buttons ───────────────────────────────────────────────────────────────
+    el.begin.addEventListener('click', () => socket.emit('begin_workout'));
+    el.end.addEventListener  ('click', () => socket.emit('end_workout'));
+
+    // ── Connection state ──────────────────────────────────────────────────────
+    socket.on('connect', () => {
+      el.status.textContent = 'Connected';
+    });
+    socket.on('disconnect', () => {
+      el.dot.classList.remove('active');
+      el.status.textContent = 'Disconnected';
+    });
+  </script>
+</body>
+</html>

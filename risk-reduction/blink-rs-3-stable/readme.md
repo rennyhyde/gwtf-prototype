@@ -1,0 +1,1 @@
+This code uses the stable branch of the ESP-HAL. I just figured it would be best to make code using this branch than to use the unstable one, even though I'm pretty sure the wifi and BLE libraries are gated behind unstable HAL.

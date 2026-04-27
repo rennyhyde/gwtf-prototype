@@ -1,0 +1,69 @@
+** Drc report for quadrature-encoder.kicad_pcb **
+** Created on 2026-04-21T16:25:20-0400 **
+
+** Found 7 DRC violations **
+[clearance]: Clearance violation (netclass 'Default' clearance 0.2000 mm; actual 0.1800 mm)
+    Rule: netclass 'Default'; error
+    @(126.1670 mm, 75.7170 mm): Pad 2 [+3V3] of R2 on F.Cu
+    @(126.1670 mm, 76.3570 mm): Pad 1 [Net-(Q1-C)] of R2 on F.Cu
+[clearance]: Clearance violation (netclass 'Default' clearance 0.2000 mm; actual 0.1800 mm)
+    Rule: netclass 'Default'; error
+    @(135.7330 mm, 46.4210 mm): Pad 2 [+3V3] of R1 on F.Cu
+    @(136.3730 mm, 46.4210 mm): Pad 1 [Net-(D2-A)] of R1 on F.Cu
+[clearance]: Clearance violation (netclass 'Default' clearance 0.2000 mm; actual 0.1800 mm)
+    Rule: netclass 'Default'; error
+    @(122.9945 mm, 46.3550 mm): Pad 2 [+3V3] of R5 on F.Cu
+    @(123.6345 mm, 46.3550 mm): Pad 1 [Net-(D1-A)] of R5 on F.Cu
+[clearance]: Clearance violation (netclass 'Default' clearance 0.2000 mm; actual 0.1800 mm)
+    Rule: netclass 'Default'; error
+    @(127.9170 mm, 75.7170 mm): Pad 2 [Net-(U3-GPIO14)] of R3 on F.Cu
+    @(127.9170 mm, 76.3570 mm): Pad 1 [+3V3] of R3 on F.Cu
+[clearance]: Clearance violation (netclass 'Default' clearance 0.2000 mm; actual 0.1800 mm)
+    Rule: netclass 'Default'; error
+    @(129.6670 mm, 75.7170 mm): Pad 2 [Net-(U3-GPIO7)] of R4 on F.Cu
+    @(129.6670 mm, 76.3570 mm): Pad 1 [+3V3] of R4 on F.Cu
+[clearance]: Clearance violation (netclass 'Default' clearance 0.2000 mm; actual 0.1800 mm)
+    Rule: netclass 'Default'; error
+    @(133.1670 mm, 76.3570 mm): Pad 1 [Net-(Q2-C)] of R6 on F.Cu
+    @(133.1670 mm, 75.7170 mm): Pad 2 [+3V3] of R6 on F.Cu
+[malformed_courtyard]: Footprint has malformed courtyard (not a closed shape)
+    Local override; error
+    @(82.5260 mm, 74.3883 mm): Footprint U3
+
+** Found 8 unconnected pads **
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(82.5260 mm, 104.8683 mm): PTH pad 13 [GND] of U3
+    @(82.5260 mm, 109.9483 mm): PTH pad 15 [GND] of U3
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(82.5260 mm, 109.9483 mm): PTH pad 15 [GND] of U3
+    @(105.3860 mm, 109.9483 mm): PTH pad 16 [GND] of U3
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(105.3860 mm, 102.3283 mm): PTH pad 19 [GND] of U3
+    @(105.3860 mm, 74.3883 mm): Track [GND] on F.Cu, length 3.9990 mm
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(105.3860 mm, 109.9483 mm): PTH pad 16 [GND] of U3
+    @(105.3860 mm, 102.3283 mm): PTH pad 19 [GND] of U3
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(110.1650 mm, 45.2680 mm): Track [GND] on F.Cu, length 1.7169 mm
+    @(115.3922 mm, 65.9130 mm): Track [GND] on F.Cu, length 4.6228 mm
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(138.1992 mm, 76.8880 mm): Track [Net-(Q1-C)] on F.Cu, length 0.2128 mm
+    @(140.5052 mm, 75.1840 mm): Track [Net-(Q1-C)] on F.Cu, length 0.6020 mm
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(144.5984 mm, 65.3326 mm): Track [+3V3] on F.Cu, length 53.0167 mm
+    @(100.5840 mm, 48.7680 mm): Track [+3V3] on F.Cu, length 19.9975 mm
+[unconnected_items]: Missing connection between items
+    Local override; error
+    @(127.9170 mm, 76.3570 mm): Track [+3V3] on F.Cu, length 0.2000 mm
+    @(126.1670 mm, 75.7170 mm): Pad 2 [+3V3] of R2 on F.Cu
+
+** Found 0 Footprint errors **
+
+** End of Report **
