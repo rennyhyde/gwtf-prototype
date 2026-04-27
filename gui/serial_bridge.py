@@ -36,8 +36,8 @@ UDP_PORT    = 9000
 BAUD_RATE   = 115200
 
 # Serial port for each arm.  Set TANK_1_PORT = None if only one ESP32 is connected.
-TANK_0_PORT = "/dev/ttyUSB0"   # left arm  — change to "COM3" etc. on Windows
-TANK_1_PORT = None              # right arm — set when second ESP32 is ready
+TANK_0_PORT = "/dev/serial/by-path/platform-xhci-hdc.0-usb-0:2:1.0"   # left arm  — change to "COM3" etc. on Windows
+TANK_1_PORT = "/dev/serial/by-path/platform-xhci-hdc.1-usb-0:2:1.0"              # right arm — set when second ESP32 is ready
 
 # Force model (must match simulator.py so charts are on the same scale).
 # F = C_EFF * omega^2  where omega = RPM * 2*pi/60
