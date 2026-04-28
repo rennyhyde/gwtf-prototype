@@ -55,7 +55,7 @@ if [ -n "$CHROMIUM_BIN" ]; then
 [Desktop Entry]
 Type=Application
 Name=SwimOn Kiosk
-Exec=bash -c "sleep 6 && $CHROMIUM_BIN --kiosk --app=http://localhost:5000 --disable-infobars --noerrdialogs --check-for-update-interval=31536000"
+Exec=bash -c "sleep 6 && $CHROMIUM_BIN --kiosk --app=127.0.0.1:5000 --disable-infobars --noerrdialogs --check-for-update-interval=31536000"
 Terminal=false
 X-GNOME-Autostart-enabled=true
 EOF
