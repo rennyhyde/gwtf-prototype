@@ -41,7 +41,7 @@ BAUD_RATE   = 115200
 # Run: ls -la /dev/serial/by-path/   to find your device names.
 # Set TANK_1_PORT = None if only one ESP32 is connected.
 TANK_0_PORT = "/dev/serial/by-path/platform-xhci-hcd.0-usb-0:2:1.0"   # left arm
-TANK_1_PORT = "/dev/serial/by-path/platform-xhci-hcd.1-usb-0:2:1.0"
+TANK_1_PORT = None # "/dev/serial/by-path/platform-xhci-hcd.1-usb-0:2:1.0"
 
 # How often to print a status line (in UDP packets sent, ~10/s per arm)
 STATUS_EVERY = 30   # print roughly every 3 seconds
