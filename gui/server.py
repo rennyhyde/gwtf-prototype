@@ -57,15 +57,18 @@ class WorkoutState:
             {"prev_dir": 0},
         ]
 
-        # Rolling chart buffers — list of {"t": elapsed_s, "v": value}
-        self.chart_force = [[], []]   # index 0=left, 1=right
-        self.chart_power = []         # combined power, both arms
+        # Rolling chart buffer — list of {"t": elapsed_s, "v": value}
+        self.chart_force = [[], []]   # kept per-arm for future two-arm restore
 
         # Cumulative metrics
         self.total_strokes     = 0
         self.total_distance_m  = 0.0
         self.total_calories    = 0.0
         self.total_mech_J      = 0.0
+
+        # Swim speed: timestamps of last N completed strokes for rolling rate
+        self.stroke_times   = []
+        self.swim_speed_ms  = 0.0
 
         # Current-snapshot (last received packet per arm)
         self.cur_force  = [0.0, 0.0]
@@ -103,17 +106,11 @@ def process_packet(state: WorkoutState, pkt: dict) -> None:
         power_w = force_n * vel_ms if (dir_flag == 1 and rpm > MIN_PULL_RPM) else 0.0
         state.cur_power[tank] = power_w
 
-        # Rolling chart buffers
+        # Rolling chart buffer (tank 0 drives the display; tank 1 stored for future use)
         pt_force = {"t": round(elapsed, 2), "v": round(state.cur_force[tank], 1)}
-        pt_power = {"t": round(elapsed, 2), "v": round(power_w, 1)}
-
         state.chart_force[tank].append(pt_force)
         if len(state.chart_force[tank]) > CHART_WINDOW:
             state.chart_force[tank].pop(0)
-
-        state.chart_power.append(pt_power)
-        if len(state.chart_power) > CHART_WINDOW * 2:
-            state.chart_power.pop(0)
 
         # Mechanical energy → calories (pull phase only)
         if dir_flag == 1 and rpm > MIN_PULL_RPM:
@@ -128,6 +125,16 @@ def process_packet(state: WorkoutState, pkt: dict) -> None:
         if prev == 1 and dir_flag == -1:
             state.total_strokes    += 1
             state.total_distance_m  = state.total_strokes * METERS_PER_STROKE
+
+            # Rolling swim speed from last 8 stroke timestamps
+            now = time.monotonic()
+            state.stroke_times.append(now)
+            if len(state.stroke_times) > 8:
+                state.stroke_times.pop(0)
+            if len(state.stroke_times) >= 2:
+                span = state.stroke_times[-1] - state.stroke_times[0]
+                rate = (len(state.stroke_times) - 1) / span  # strokes/sec
+                state.swim_speed_ms = rate * METERS_PER_STROKE
 
         state.arm[tank]["prev_dir"] = dir_flag
 
@@ -163,19 +170,17 @@ def emit_loop(state: WorkoutState, sio: SocketIO) -> None:
             seconds  = int(elapsed) % 60
 
             payload = {
-                "time_str":    f"{minutes:02d}:{seconds:02d}",
-                "elapsed_s":   round(elapsed, 1),
-                "distance_m":  round(state.total_distance_m, 1),
-                "calories":    round(state.total_calories, 2),
-                "strokes":     state.total_strokes,
-                "speed_ms":    round((state.cur_speed[0] + state.cur_speed[1]) / 2.0, 2),
-                "power_w":     round(state.cur_power[0] + state.cur_power[1], 1),
-                "force_left":  round(state.cur_force[0], 1),
-                "force_right": round(state.cur_force[1], 1),
-                "chart_left":  list(state.chart_force[0]),
-                "chart_right": list(state.chart_force[1]),
-                "chart_power": list(state.chart_power[-CHART_WINDOW:]),
-                "running":     state.running,
+                "time_str":      f"{minutes:02d}:{seconds:02d}",
+                "elapsed_s":     round(elapsed, 1),
+                "distance_m":    round(state.total_distance_m, 1),
+                "calories":      round(state.total_calories, 2),
+                "strokes":       state.total_strokes,
+                "speed_ms":      round(state.cur_speed[0], 2),
+                "power_w":       round(state.cur_power[0], 1),
+                "force_n":       round(state.cur_force[0], 1),
+                "swim_speed_ms": round(state.swim_speed_ms, 2),
+                "chart_force":   list(state.chart_force[0]),
+                "running":       state.running,
             }
 
         sio.emit("metrics", payload)

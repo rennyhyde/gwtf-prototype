@@ -17,6 +17,8 @@
       --surface:   #161b22;
       --border:    #30363d;
       --accent:    #00b4d8;
+      --accent2:   #48cae4;
+      --accent3:   #90e0ef;
       --text:      #e6edf3;
       --dim:       #8b949e;
       --green:     #3fb950;
@@ -33,8 +35,8 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      gap: 0.65rem;
-      padding: 0.65rem;
+      gap: 0.75rem;
+      padding: 0.75rem;
     }
 
     /* ── Header ─────────────────────────────────────────────────────────── */
@@ -45,7 +47,7 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 0.55rem 1rem;
+      padding: 0.65rem 1rem;
     }
 
     .logo {
@@ -75,26 +77,30 @@
     }
     #status-dot.active { background: var(--green); }
 
-    /* ── Metrics grid — 4 columns, 2 rows ───────────────────────────────── */
+    /* ── Metrics grid ────────────────────────────────────────────────────── */
     #metrics-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 0.55rem;
+      gap: 0.6rem;
+    }
+
+    @media (max-width: 700px) {
+      #metrics-grid { grid-template-columns: repeat(2, 1fr); }
     }
 
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 0.75rem 0.5rem;
+      padding: 0.85rem 0.75rem;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.15rem;
+      gap: 0.2rem;
     }
 
     .card-label {
-      font-size: 0.62rem;
+      font-size: 0.65rem;
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: var(--dim);
@@ -102,53 +108,56 @@
 
     .card-value {
       font-family: var(--mono);
-      font-size: 1.85rem;
+      font-size: 1.9rem;
       color: var(--accent);
       line-height: 1;
     }
 
     .card-unit {
-      font-size: 0.65rem;
+      font-size: 0.7rem;
       color: var(--dim);
     }
 
-    /* ── Controls — big touch targets for 7" Pi screen ──────────────────── */
+    /* ── Controls ────────────────────────────────────────────────────────── */
     #controls {
       display: flex;
-      gap: 1rem;
+      gap: 0.75rem;
       justify-content: center;
     }
 
     button {
-      min-height: 60px;
-      min-width: 180px;
-      padding: 0 2rem;
+      padding: 0.55rem 1.8rem;
       border: none;
-      border-radius: 8px;
-      font-size: 1.1rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
       cursor: pointer;
-      transition: opacity 0.15s, transform 0.08s;
-      touch-action: manipulation;   /* prevents 300ms tap delay on mobile */
+      transition: opacity 0.15s, transform 0.1s;
     }
 
-    button:active  { transform: scale(0.96); }
-    button:disabled { opacity: 0.28; cursor: not-allowed; transform: none; }
+    button:active { transform: scale(0.97); }
+    button:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
 
     #btn-begin { background: var(--green); color: #000; }
     #btn-end   { background: var(--red);   color: #fff; }
 
-    /* ── Chart ───────────────────────────────────────────────────────────── */
-    #chart-card {
+    /* ── Charts ──────────────────────────────────────────────────────────── */
+    #charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+    }
+
+    .chart-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 0.65rem 0.75rem 0.5rem;
-      flex: 1;               /* take remaining vertical space */
-      min-height: 0;         /* allow shrinking inside flex column */
-      display: flex;
-      flex-direction: column;
+    }
+
+    .chart-card.wide {
+      grid-column: 1 / -1;
     }
 
     .chart-label {
@@ -157,12 +166,14 @@
       letter-spacing: 0.08em;
       color: var(--dim);
       margin-bottom: 0.4rem;
-      flex-shrink: 0;
     }
 
-    #chart-card canvas {
-      flex: 1;
-      min-height: 0;
+    .chart-card canvas { max-height: 130px; }
+    .chart-card.wide canvas { max-height: 110px; }
+
+    @media (max-width: 600px) {
+      #charts-grid { grid-template-columns: 1fr; }
+      .chart-card.wide { grid-column: 1; }
     }
   </style>
 </head>
@@ -178,7 +189,7 @@
     </div>
   </header>
 
-  <!-- ── Metrics — row 1: workout totals ──────────────────────────────── -->
+  <!-- ── Metrics grid ───────────────────────────────────────────────────── -->
   <div id="metrics-grid">
     <div class="card">
       <span class="card-label">Time</span>
@@ -200,12 +211,10 @@
       <span class="card-value" id="m-strokes">0</span>
       <span class="card-unit">total</span>
     </div>
-
-    <!-- row 2: real-time sensor metrics -->
     <div class="card">
-      <span class="card-label">Force</span>
-      <span class="card-value" id="m-force">0</span>
-      <span class="card-unit">N</span>
+      <span class="card-label">Speed</span>
+      <span class="card-value" id="m-speed">0.00</span>
+      <span class="card-unit">m/s</span>
     </div>
     <div class="card">
       <span class="card-label">Power</span>
@@ -213,14 +222,14 @@
       <span class="card-unit">W</span>
     </div>
     <div class="card">
-      <span class="card-label">Pull Speed</span>
-      <span class="card-value" id="m-speed">0.00</span>
-      <span class="card-unit">m/s</span>
+      <span class="card-label">Force L</span>
+      <span class="card-value" id="m-fl">0</span>
+      <span class="card-unit">N</span>
     </div>
     <div class="card">
-      <span class="card-label">Swim Speed</span>
-      <span class="card-value" id="m-swim">0.00</span>
-      <span class="card-unit">m/s est.</span>
+      <span class="card-label">Force R</span>
+      <span class="card-value" id="m-fr">0</span>
+      <span class="card-unit">N</span>
     </div>
   </div>
 
@@ -230,10 +239,20 @@
     <button id="btn-end"   disabled>END WORKOUT</button>
   </div>
 
-  <!-- ── Force chart ────────────────────────────────────────────────────── -->
-  <div id="chart-card">
-    <div class="chart-label">Force (N) — last 10 s</div>
-    <canvas id="chart-force"></canvas>
+  <!-- ── Charts ─────────────────────────────────────────────────────────── -->
+  <div id="charts-grid">
+    <div class="chart-card">
+      <div class="chart-label">Left Arm Force (N)</div>
+      <canvas id="chart-left"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-label">Right Arm Force (N)</div>
+      <canvas id="chart-right"></canvas>
+    </div>
+    <div class="chart-card wide">
+      <div class="chart-label">Combined Power (W)</div>
+      <canvas id="chart-power"></canvas>
+    </div>
   </div>
 
   <script>
@@ -246,61 +265,70 @@
       dist:    document.getElementById('m-dist'),
       cal:     document.getElementById('m-cal'),
       strokes: document.getElementById('m-strokes'),
-      force:   document.getElementById('m-force'),
-      power:   document.getElementById('m-power'),
       speed:   document.getElementById('m-speed'),
-      swim:    document.getElementById('m-swim'),
+      power:   document.getElementById('m-power'),
+      fl:      document.getElementById('m-fl'),
+      fr:      document.getElementById('m-fr'),
       dot:     document.getElementById('status-dot'),
       status:  document.getElementById('status-text'),
       begin:   document.getElementById('btn-begin'),
       end:     document.getElementById('btn-end'),
     };
 
-    // ── Force chart ───────────────────────────────────────────────────────────
-    const chartForce = new Chart(document.getElementById('chart-force'), {
-      type: 'line',
-      data: {
-        datasets: [{
-          data: [],
-          borderColor: '#00b4d8',
-          borderWidth: 1.5,
-          pointRadius: 0,
-          tension: 0.35,
-          fill: true,
-          backgroundColor: '#00b4d81a',
-        }]
-      },
-      options: {
-        animation: false,
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          x: {
-            type: 'linear',
-            min: 0, max: 10,
-            ticks: {
-              color: '#8b949e',
-              maxTicksLimit: 6,
-              callback: v => v.toFixed(0) + 's',
-            },
-            grid: { color: '#30363d' },
-          },
-          y: {
-            min: 0, max: 60,
-            ticks: { color: '#8b949e', maxTicksLimit: 5 },
-            grid: { color: '#30363d' },
-          },
+    // ── Chart factory ─────────────────────────────────────────────────────────
+    function makeChart(canvasId, label, color, yMax) {
+      return new Chart(document.getElementById(canvasId), {
+        type: 'line',
+        data: {
+          datasets: [{
+            label,
+            data: [],            // [{x, y}] pairs
+            borderColor: color,
+            borderWidth: 1.5,
+            pointRadius: 0,
+            tension: 0.35,
+            fill: true,
+            backgroundColor: color + '1a',  // ~10% opacity fill
+          }]
         },
-        plugins: { legend: { display: false } },
-      },
-    });
+        options: {
+          animation: false,      // critical at 10 Hz on Raspberry Pi
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              type: 'linear',
+              min: 0,
+              max: 10,
+              ticks: {
+                color: '#8b949e',
+                maxTicksLimit: 6,
+                callback: v => v.toFixed(0) + 's',
+              },
+              grid: { color: '#30363d' },
+            },
+            y: {
+              min: 0,
+              max: yMax,
+              ticks: { color: '#8b949e', maxTicksLimit: 5 },
+              grid: { color: '#30363d' },
+            },
+          },
+          plugins: { legend: { display: false } },
+        },
+      });
+    }
+
+    const chartLeft  = makeChart('chart-left',  'Left Force (N)',  '#00b4d8', 60);
+    const chartRight = makeChart('chart-right', 'Right Force (N)', '#48cae4', 60);
+    const chartPower = makeChart('chart-power', 'Power (W)',       '#90e0ef', 150);
 
     // ── Chart updater ─────────────────────────────────────────────────────────
     function updateChart(chart, pts, nowT) {
       chart.data.datasets[0].data = pts.map(p => ({ x: p.t, y: p.v }));
       chart.options.scales.x.min = Math.max(0, nowT - 10);
       chart.options.scales.x.max = Math.max(10, nowT);
-      chart.update('none');
+      chart.update('none');    // skip animation even if somehow re-enabled
     }
 
     // ── Metrics handler ───────────────────────────────────────────────────────
@@ -309,17 +337,22 @@
       el.dist.textContent    = d.distance_m.toFixed(0);
       el.cal.textContent     = d.calories.toFixed(1);
       el.strokes.textContent = d.strokes;
-      el.force.textContent   = d.force_n.toFixed(0);
-      el.power.textContent   = d.power_w.toFixed(0);
       el.speed.textContent   = d.speed_ms.toFixed(2);
-      el.swim.textContent    = d.swim_speed_ms.toFixed(2);
+      el.power.textContent   = d.power_w.toFixed(0);
+      el.fl.textContent      = d.force_left.toFixed(0);
+      el.fr.textContent      = d.force_right.toFixed(0);
 
-      el.dot.classList.toggle('active', d.running);
-      el.status.textContent = d.running ? 'Live' : 'Stopped';
-      el.begin.disabled = d.running;
-      el.end.disabled   = !d.running;
+      // Status indicator
+      const running = d.running;
+      el.dot.classList.toggle('active', running);
+      el.status.textContent = running ? 'Live' : 'Stopped';
+      el.begin.disabled = running;
+      el.end.disabled   = !running;
 
-      updateChart(chartForce, d.chart_force, d.elapsed_s);
+      // Charts
+      updateChart(chartLeft,  d.chart_left,  d.elapsed_s);
+      updateChart(chartRight, d.chart_right, d.elapsed_s);
+      updateChart(chartPower, d.chart_power, d.elapsed_s);
     });
 
     // ── Buttons ───────────────────────────────────────────────────────────────
@@ -327,7 +360,9 @@
     el.end.addEventListener  ('click', () => socket.emit('end_workout'));
 
     // ── Connection state ──────────────────────────────────────────────────────
-    socket.on('connect',    () => { el.status.textContent = 'Connected'; });
+    socket.on('connect', () => {
+      el.status.textContent = 'Connected';
+    });
     socket.on('disconnect', () => {
       el.dot.classList.remove('active');
       el.status.textContent = 'Disconnected';
