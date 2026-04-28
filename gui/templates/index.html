@@ -4,37 +4,39 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SwimOn</title>
-
-  <!-- Socket.IO 4.x client — matches flask-socketio 5.x (protocol v5) -->
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <!-- Chart.js UMD bundle (no build step needed) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 
   <style>
-    /* ── Design tokens ──────────────────────────────────────────────────── */
     :root {
-      --bg:        #0d1117;
-      --surface:   #161b22;
-      --border:    #30363d;
-      --accent:    #00b4d8;
-      --text:      #e6edf3;
-      --dim:       #8b949e;
-      --green:     #3fb950;
-      --red:       #f85149;
-      --mono:      'Courier New', 'Consolas', monospace;
+      --bg:      #0d1117;
+      --surface: #161b22;
+      --border:  #30363d;
+      --accent:  #00b4d8;
+      --text:    #e6edf3;
+      --dim:     #8b949e;
+      --green:   #3fb950;
+      --red:     #f85149;
+      --mono:    'Courier New', 'Consolas', monospace;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /*
+      height:100vh + overflow:hidden locks the page to the viewport.
+      This prevents the Chart.js infinite-resize loop that occurs when
+      a responsive canvas sits inside a flex child that can grow.
+    */
     body {
+      height: 100vh;
+      overflow: hidden;
       background: var(--bg);
       color: var(--text);
       font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
-      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      gap: 0.65rem;
-      padding: 0.65rem;
+      gap: 0.5rem;
+      padding: 0.5rem;
     }
 
     /* ── Header ─────────────────────────────────────────────────────────── */
@@ -45,11 +47,12 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 0.55rem 1rem;
+      padding: 0.45rem 1rem;
+      flex-shrink: 0;
     }
 
     .logo {
-      font-size: 1.3rem;
+      font-size: 1.25rem;
       font-weight: 700;
       letter-spacing: 0.12em;
       color: var(--accent);
@@ -58,43 +61,42 @@
     .status {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      font-size: 0.75rem;
+      gap: 0.45rem;
+      font-size: 0.72rem;
       color: var(--dim);
       text-transform: uppercase;
       letter-spacing: 0.07em;
     }
 
     #status-dot {
-      width: 9px;
-      height: 9px;
+      width: 9px; height: 9px;
       border-radius: 50%;
       background: var(--dim);
       transition: background 0.4s;
-      flex-shrink: 0;
     }
     #status-dot.active { background: var(--green); }
 
-    /* ── Metrics grid — 4 columns, 2 rows ───────────────────────────────── */
+    /* ── Metrics — 4 columns, 2 rows ────────────────────────────────────── */
     #metrics-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 0.55rem;
+      gap: 0.5rem;
+      flex-shrink: 0;
     }
 
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 0.75rem 0.5rem;
+      padding: 0.6rem 0.4rem;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.15rem;
+      gap: 0.1rem;
     }
 
     .card-label {
-      font-size: 0.62rem;
+      font-size: 0.6rem;
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: var(--dim);
@@ -102,26 +104,27 @@
 
     .card-value {
       font-family: var(--mono);
-      font-size: 1.85rem;
+      font-size: 1.75rem;
       color: var(--accent);
       line-height: 1;
     }
 
     .card-unit {
-      font-size: 0.65rem;
+      font-size: 0.6rem;
       color: var(--dim);
     }
 
-    /* ── Controls — big touch targets for 7" Pi screen ──────────────────── */
+    /* ── Controls ────────────────────────────────────────────────────────── */
     #controls {
       display: flex;
       gap: 1rem;
       justify-content: center;
+      flex-shrink: 0;
     }
 
     button {
-      min-height: 60px;
-      min-width: 180px;
+      min-height: 58px;
+      min-width: 190px;
       padding: 0 2rem;
       border: none;
       border-radius: 8px;
@@ -129,8 +132,8 @@
       font-weight: 700;
       letter-spacing: 0.08em;
       cursor: pointer;
+      touch-action: manipulation;
       transition: opacity 0.15s, transform 0.08s;
-      touch-action: manipulation;   /* prevents 300ms tap delay on mobile */
     }
 
     button:active  { transform: scale(0.96); }
@@ -139,28 +142,35 @@
     #btn-begin { background: var(--green); color: #000; }
     #btn-end   { background: var(--red);   color: #fff; }
 
-    /* ── Chart ───────────────────────────────────────────────────────────── */
-    #chart-card {
+    /* ── Chart wrapper ───────────────────────────────────────────────────── */
+    /*
+      flex:1 + min-height:0 lets this div grow to fill remaining space.
+      The inner div is position:relative with height:100% — Chart.js reads
+      this height to size the canvas. Without position:relative on the inner
+      wrapper the canvas has no stable height anchor and causes infinite resize.
+    */
+    #chart-outer {
+      flex: 1;
+      min-height: 0;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 0.65rem 0.75rem 0.5rem;
-      flex: 1;               /* take remaining vertical space */
-      min-height: 0;         /* allow shrinking inside flex column */
+      padding: 0.5rem 0.65rem 0.4rem;
       display: flex;
       flex-direction: column;
     }
 
     .chart-label {
-      font-size: 0.65rem;
+      font-size: 0.62rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--dim);
-      margin-bottom: 0.4rem;
+      margin-bottom: 0.3rem;
       flex-shrink: 0;
     }
 
-    #chart-card canvas {
+    #chart-inner {
+      position: relative;   /* Chart.js anchor — do not remove */
       flex: 1;
       min-height: 0;
     }
@@ -169,7 +179,6 @@
 
 <body>
 
-  <!-- ── Header ─────────────────────────────────────────────────────────── -->
   <header>
     <span class="logo">SWIMON</span>
     <div class="status">
@@ -178,8 +187,8 @@
     </div>
   </header>
 
-  <!-- ── Metrics — row 1: workout totals ──────────────────────────────── -->
   <div id="metrics-grid">
+    <!-- Row 1: workout totals -->
     <div class="card">
       <span class="card-label">Time</span>
       <span class="card-value" id="m-time">00:00</span>
@@ -201,7 +210,7 @@
       <span class="card-unit">total</span>
     </div>
 
-    <!-- row 2: real-time sensor metrics -->
+    <!-- Row 2: real-time sensor -->
     <div class="card">
       <span class="card-label">Force</span>
       <span class="card-value" id="m-force">0</span>
@@ -224,23 +233,21 @@
     </div>
   </div>
 
-  <!-- ── Controls ───────────────────────────────────────────────────────── -->
   <div id="controls">
     <button id="btn-begin">BEGIN WORKOUT</button>
-    <button id="btn-end"   disabled>END WORKOUT</button>
+    <button id="btn-end" disabled>END WORKOUT</button>
   </div>
 
-  <!-- ── Force chart ────────────────────────────────────────────────────── -->
-  <div id="chart-card">
+  <div id="chart-outer">
     <div class="chart-label">Force (N) — last 10 s</div>
-    <canvas id="chart-force"></canvas>
+    <div id="chart-inner">
+      <canvas id="chart-force"></canvas>
+    </div>
   </div>
 
   <script>
-    // ── Socket.IO ────────────────────────────────────────────────────────────
     const socket = io();
 
-    // ── DOM refs ─────────────────────────────────────────────────────────────
     const el = {
       time:    document.getElementById('m-time'),
       dist:    document.getElementById('m-dist'),
@@ -256,7 +263,6 @@
       end:     document.getElementById('btn-end'),
     };
 
-    // ── Force chart ───────────────────────────────────────────────────────────
     const chartForce = new Chart(document.getElementById('chart-force'), {
       type: 'line',
       data: {
@@ -278,11 +284,8 @@
           x: {
             type: 'linear',
             min: 0, max: 10,
-            ticks: {
-              color: '#8b949e',
-              maxTicksLimit: 6,
-              callback: v => v.toFixed(0) + 's',
-            },
+            ticks: { color: '#8b949e', maxTicksLimit: 6,
+                     callback: v => v.toFixed(0) + 's' },
             grid: { color: '#30363d' },
           },
           y: {
@@ -295,7 +298,6 @@
       },
     });
 
-    // ── Chart updater ─────────────────────────────────────────────────────────
     function updateChart(chart, pts, nowT) {
       chart.data.datasets[0].data = pts.map(p => ({ x: p.t, y: p.v }));
       chart.options.scales.x.min = Math.max(0, nowT - 10);
@@ -303,7 +305,6 @@
       chart.update('none');
     }
 
-    // ── Metrics handler ───────────────────────────────────────────────────────
     socket.on('metrics', function(d) {
       el.time.textContent    = d.time_str;
       el.dist.textContent    = d.distance_m.toFixed(0);
@@ -322,11 +323,9 @@
       updateChart(chartForce, d.chart_force, d.elapsed_s);
     });
 
-    // ── Buttons ───────────────────────────────────────────────────────────────
     el.begin.addEventListener('click', () => socket.emit('begin_workout'));
     el.end.addEventListener  ('click', () => socket.emit('end_workout'));
 
-    // ── Connection state ──────────────────────────────────────────────────────
     socket.on('connect',    () => { el.status.textContent = 'Connected'; });
     socket.on('disconnect', () => {
       el.dot.classList.remove('active');
