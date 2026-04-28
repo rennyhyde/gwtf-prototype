@@ -224,4 +224,4 @@ if __name__ == "__main__":
     sio.start_background_task(udp_listener, state, sio)
     sio.start_background_task(emit_loop,    state, sio)
     print(f"SwimOn server -> http://localhost:{HTTP_PORT}")
-    sio.run(app, host=HTTP_HOST, port=HTTP_PORT, debug=False)
+    sio.run(app, host=HTTP_HOST, port=HTTP_PORT, debug=False, allow_unsafe_werkzeug=True)
